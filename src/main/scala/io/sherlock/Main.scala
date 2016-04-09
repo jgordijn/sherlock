@@ -19,7 +19,7 @@ object Main extends App {
   val bindingFuture = Http().bindAndHandle(routes, hostname, port)
   import system.dispatcher
   bindingFuture.onSuccess {
-    case binding => println(s"Bound: ${binding.localAddress.getPort}")
+    case binding ⇒ println(s"Bound: ${binding.localAddress.getPort}")
   }
 
 }

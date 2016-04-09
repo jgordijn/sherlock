@@ -4,10 +4,12 @@ import akka.actor.{ Actor, ActorRef, Props }
 import akka.cluster.Cluster
 import akka.cluster.ddata.Replicator._
 import akka.cluster.ddata.{ DistributedData, ORSet, ORSetKey, Replicator }
+import io.sherlock.detector.MyPhiAccrualFailureDetector
 
 object ServiceInstance {
-  case class Accuracy(percentage: Long)
+  case class Accuracy(percentage: Double)
   val props = Props(new ServiceInstance)
+
 }
 
 class ServiceInstance extends Actor {
@@ -16,6 +18,7 @@ class ServiceInstance extends Actor {
   val replicator = DistributedData(context.system).replicator
   implicit val node = Cluster(context.system)
   val DataKey = ORSetKey[Long](self.path.name)
+  implicit val clock = MyPhiAccrualFailureDetector.defaultClock
 
   var upProbability = 100
   val maxSize = 1000
@@ -33,17 +36,8 @@ class ServiceInstance extends Actor {
       replicator ! Replicator.Get(DataKey, ReadLocal, Some(sender()))
     case g @ GetSuccess(DataKey, Some(originalSender: ActorRef)) ⇒
       val data = g.get(DataKey)
-      val all = data.elements.toList.sorted
-      val first = all.head
-      val diffs = all.foldLeft((Vector.empty[Long], first)) {
-        case ((deltas, last), next) ⇒
-          (deltas :+ (next - last), next)
-      }._1.sorted.tail
-      val median = diffs(diffs.size / 2)
-      val now = System.currentTimeMillis()
-      val timeSinceLastHeartBeat = now - all.last
-      //      println(s"\t\t\t\tMedian: $median ($diffs), elapsed: $timeSinceLastHeartBeat")
-      val accuracy = if (timeSinceLastHeartBeat <= median) 100 else 100 - 5 * (timeSinceLastHeartBeat / median)
-      originalSender ! Accuracy(Math.max(accuracy, 0L))
+      val timestamps = data.elements.toList
+      val accuracy = MyPhiAccrualFailureDetector(timestamps.sorted.toIndexedSeq).phi
+      originalSender ! Accuracy(accuracy)
   }
 }

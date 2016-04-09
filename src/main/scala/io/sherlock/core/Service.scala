@@ -13,7 +13,7 @@ import scala.concurrent.duration._
 object Service {
   def props = Props(new Service)
   case object GetAccuracy
-  case class Result(accuracy: Map[String, Long])
+  case class Result(accuracy: Map[String, Double])
 }
 
 class Service extends Actor {
@@ -37,7 +37,7 @@ class Service extends Actor {
       val serviceInstanceName = s"$ip:$port"
       getOrCreateAndSubscribe(serviceInstanceName) ! hb
     case GetAccuracy ⇒
-      val futures = Future.traverse(context.children) { child ⇒ (child ? GetAccuracy).mapTo[ServiceInstance.Accuracy].map(a ⇒ child.path.name -> a.percentage) }
+      val futures = Future.traverse(context.children) { child ⇒ (child ? GetAccuracy).mapTo[ServiceInstance.Accuracy].map(a ⇒ child.path.name → a.percentage) }
       futures.map(_.toMap).map(Result).pipeTo(sender())
     case c @ Changed(DataKey) ⇒
       val data = c.get(DataKey)

@@ -1,10 +1,9 @@
 package io.sherlock
 
 import akka.actor.ActorSystem
-import akka.testkit.{ImplicitSender, TestKit}
-import HeartBeat
-import io.sherlock.core.{HeartBeat, Service}
-import org.scalatest.{WordSpecLike, FunSuite}
+import akka.testkit.{ ImplicitSender, TestKit }
+import io.sherlock.core.{ HeartBeat, Service }
+import org.scalatest.WordSpecLike
 
 import scala.util.Random
 
@@ -14,7 +13,7 @@ class ServiceTest extends TestKit(ActorSystem()) with WordSpecLike with Implicit
 
   "Service" should {
     "handle heartbeats" in {
-      (1 to 10).foreach { _ =>
+      (1 to 10).foreach { _ ⇒
         val r = Random.nextInt(15)
         Thread.sleep(100 + r)
         service ! HeartBeat("/foo", "192.168.1.1", 80)
@@ -22,7 +21,7 @@ class ServiceTest extends TestKit(ActorSystem()) with WordSpecLike with Implicit
         service ! HeartBeat("/foo", "192.168.1.2", 80)
       }
       val start = System.currentTimeMillis()
-      (1 to 10).foreach { i =>
+      (1 to 10).foreach { i ⇒
         val r = Random.nextInt(15)
         Thread.sleep(50 + r)
         service ! HeartBeat("/foo", "192.168.1.2", 80)
@@ -31,7 +30,6 @@ class ServiceTest extends TestKit(ActorSystem()) with WordSpecLike with Implicit
         val result = expectMsgType[Service.Result]
         println(s"${System.currentTimeMillis() - start}: $result")
       }
-
 
       val service2 = system.actorOf(Service.props, "foo2")
       service2 ! Service.GetAccuracy
@@ -46,10 +44,7 @@ class ServiceTest extends TestKit(ActorSystem()) with WordSpecLike with Implicit
       val result3 = expectMsgType[Service.Result]
       println(s"${System.currentTimeMillis() - start}: $result3")
 
-
-
     }
   }
-
 
 }
