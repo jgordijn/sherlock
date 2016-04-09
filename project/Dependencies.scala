@@ -1,5 +1,4 @@
 import sbt._
-import Keys._
 
 object Dependencies {
   val akkaVersion = "2.4.2"
